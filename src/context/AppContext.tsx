@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   User,
   UserRole,
@@ -39,13 +39,36 @@ import {
 } from '../data/mockData';
 import {
   signInWithGoogle as firebaseGoogleSignIn,
-  signOutFirebase
+  signOutFirebase,
+  subscribeToAuth
 } from '../firebase/firestoreService';
 import {
   storageService,
   StorageSnapshot,
   STORAGE_KEYS
 } from '../services/localStorageService';
+
+export function formatNameFromEmail(email: string): string {
+  if (!email) return 'Youth Member';
+  const prefix = email.split('@')[0] || '';
+  
+  if (prefix.toLowerCase().includes('giancarlo') || prefix.toLowerCase().includes('gian.carlo') || prefix.toLowerCase().includes('gian_carlo')) {
+    return 'Gian Carlo Magat';
+  }
+  
+  const cleaned = prefix
+    .replace(/[0-9]+/g, '')
+    .replace(/[._-]+/g, ' ')
+    .trim();
+    
+  if (!cleaned) return 'Youth Member';
+  
+  return cleaned
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
 
 export type ActivePage = 
   | 'home'
@@ -89,6 +112,7 @@ export interface ToastMessage {
 interface AppContextType {
   // Navigation & User State
   currentUser: User | null;
+  currentMember: Member;
   currentRole: UserRole;
   currentPage: ActivePage;
   selectedEventId: string | null;
@@ -438,6 +462,126 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => window.removeEventListener('storage', handleStorageEvent);
   }, []);
 
+  // Sync Firebase Auth state if active session exists
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth((fbUser) => {
+      if (fbUser) {
+        const email = fbUser.email || '';
+        const trimmedEmail = email.toLowerCase().trim();
+        const isSuperAdmin = trimmedEmail === 'giancarlomagat2104@gmail.com' || 
+                             trimmedEmail === 'giancarlomagat19@gmail.com' || 
+                             trimmedEmail.includes('admin');
+        const displayName = fbUser.displayName || formatNameFromEmail(trimmedEmail);
+
+        setCurrentUser(prev => {
+          // If already set with correct name, keep it
+          if (prev && prev.email.toLowerCase() === trimmedEmail && prev.name === displayName) {
+            return prev;
+          }
+          const matched = members.find(m => m.email.toLowerCase().trim() === trimmedEmail);
+          const memberId = matched?.memberId || `PAGASA-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+          const userObj: User = {
+            id: fbUser.uid,
+            name: displayName,
+            email: email,
+            role: isSuperAdmin ? 'SUPER_ADMIN' : (prev?.role || (matched ? 'MEMBER' : 'MEMBER')),
+            avatar: fbUser.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(displayName)}`,
+            memberId
+          };
+          return userObj;
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, [members]);
+
+  // Derived currentMember representing the authenticated user accurately
+  const currentMember: Member = useMemo(() => {
+    if (currentUser) {
+      const trimmedEmail = currentUser.email?.toLowerCase().trim();
+      const matched = members.find(m => 
+        (m.id && m.id === currentUser.id) ||
+        (trimmedEmail && m.email?.toLowerCase().trim() === trimmedEmail) ||
+        (currentUser.memberId && m.memberId === currentUser.memberId)
+      );
+      if (matched) {
+        return {
+          ...matched,
+          fullName: currentUser.name || matched.fullName,
+          email: currentUser.email || matched.email,
+          profilePicture: currentUser.avatar || matched.profilePicture
+        };
+      }
+      return {
+        id: currentUser.id || 'mem-' + (currentUser.email || 'current'),
+        memberId: currentUser.memberId || 'PAGASA-2026-0001',
+        fullName: currentUser.name || 'Youth Member',
+        email: currentUser.email || 'member@pagasaguimba.org',
+        contactNumber: '+63 917 554 8920',
+        birthdate: '2004-01-01',
+        age: 22,
+        gender: 'Male',
+        address: 'Brgy. Saint John District (Poblacion), Guimba',
+        barangay: 'Saint John District (Poblacion)',
+        educationalStatus: 'College / University',
+        occupation: currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' ? 'President & Executive Administrator' : 'Active Youth Member',
+        profilePicture: currentUser.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(currentUser.name || 'User')}`,
+        membershipStatus: 'Active',
+        membershipDate: '2026-01-01',
+        organizationPosition: currentUser.role === 'SUPER_ADMIN' ? 'President' : currentUser.role === 'ADMIN' ? 'Officer & Administrator' : 'Youth Member',
+        committee: currentUser.role === 'SUPER_ADMIN' ? 'Executive Board' : 'General Youth Volunteer',
+        emergencyContact: {
+          name: 'Emergency Contact',
+          relationship: 'Parent / Guardian',
+          contactNumber: '+63 917 554 8920'
+        },
+        registeredEventIds: [],
+        stats: {
+          eventsJoined: 0,
+          totalAttendance: 0,
+          attendanceRate: 100,
+          volunteerHours: 0,
+          projectsParticipated: 0,
+          certificatesEarned: 0
+        }
+      };
+    }
+    return members[0] || {
+      id: 'mem-fallback',
+      memberId: 'PAGASA-2026-0001',
+      fullName: 'Youth Member',
+      email: 'member@pagasaguimba.org',
+      contactNumber: '+63 917 554 8920',
+      birthdate: '2004-01-01',
+      age: 22,
+      gender: 'Male',
+      address: 'Brgy. Saint John District (Poblacion), Guimba',
+      barangay: 'Saint John District (Poblacion)',
+      educationalStatus: 'College / University',
+      occupation: 'Active Youth Member',
+      profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+      membershipStatus: 'Active',
+      membershipDate: '2026-01-01',
+      organizationPosition: 'Youth Member',
+      committee: 'General Youth Volunteer',
+      emergencyContact: {
+        name: 'Parent / Guardian',
+        relationship: 'Parent',
+        contactNumber: '+63 917 554 8920'
+      },
+      registeredEventIds: [],
+      stats: {
+        eventsJoined: 0,
+        totalAttendance: 0,
+        attendanceRate: 100,
+        volunteerHours: 0,
+        projectsParticipated: 0,
+        certificatesEarned: 0
+      }
+    };
+  }, [currentUser, members]);
+
   // Toast Helpers
   const showToast = useCallback((type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => {
     const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
@@ -512,7 +656,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else if (role === 'ADMIN') {
         targetUser = { ...INITIAL_USERS[0], role: 'ADMIN' };
       } else if (role === 'MEMBER') {
-        targetUser = INITIAL_USERS[1]; // Juan Dela Cruz
+        targetUser = INITIAL_USERS[1];
       }
       setCurrentUser(targetUser);
       storageService.saveUserSession(targetUser, role);
@@ -524,7 +668,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('success', 'Role Switched', `Logged in as Administrator (${role})`);
     } else if (role === 'MEMBER') {
       setCurrentPage('member-dashboard');
-      showToast('success', 'Welcome Back!', `Logged in as Member (${userPayload?.name || 'Juan Dela Cruz'})`);
+      showToast('success', 'Welcome Back!', `Logged in as Member (${userPayload?.name || 'Youth Member'})`);
     } else {
       setCurrentPage('home');
       showToast('info', 'Guest View', 'Browsing as Guest / Public Visitor');
@@ -537,37 +681,75 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const authUser = await firebaseGoogleSignIn();
       if (!authUser) {
-        // Simulated Google sign-in for preview resilience
-        const demoUser: User = {
-          id: 'usr-google-demo',
-          name: 'Gian Carlo Magat',
-          email: 'giancarlomagat19@gmail.com',
-          role: 'SUPER_ADMIN',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-          memberId: 'PAGASA-2026-0001'
-        };
-        switchRole('SUPER_ADMIN', demoUser);
-        logAuditEvent('Google Sign-In', 'Settings', `User signed in with Google: ${demoUser.email}`);
-        showToast('success', 'Google Sign-In Successful', `Welcome, ${demoUser.name}!`);
-        return true;
+        showToast('error', 'Google Sign-In', 'Google sign-in was cancelled or encountered an error.');
+        return false;
       }
 
       const email = authUser.email || '';
-      const isSuperAdminEmail = email.toLowerCase() === 'giancarlomagat19@gmail.com' || email.toLowerCase().includes('admin');
-      const matchedMember = members.find(m => m.email.toLowerCase() === email.toLowerCase());
+      const trimmedEmail = email.toLowerCase().trim();
+      const isSuperAdmin = trimmedEmail === 'giancarlomagat19@gmail.com' || 
+                           trimmedEmail === 'giancarlomagat2104@gmail.com' || 
+                           trimmedEmail.includes('admin');
+
+      const matchedMember = members.find(m => m.email.toLowerCase().trim() === trimmedEmail);
+      const fetchedName = authUser.name || (matchedMember ? matchedMember.fullName : formatNameFromEmail(trimmedEmail));
+      const memberId = matchedMember?.memberId || `PAGASA-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      if (matchedMember) {
+        setMembers(prev => prev.map(m => m.id === matchedMember.id ? {
+          ...m,
+          fullName: fetchedName,
+          profilePicture: authUser.avatar || m.profilePicture
+        } : m));
+      } else {
+        const newMember: Member = {
+          id: authUser.id || 'mem-' + Date.now(),
+          memberId: memberId,
+          fullName: fetchedName,
+          email: email,
+          contactNumber: '+63 917 554 8920',
+          birthdate: '2004-01-01',
+          age: 22,
+          gender: 'Male',
+          address: 'Brgy. Saint John District (Poblacion), Guimba',
+          barangay: 'Saint John District (Poblacion)',
+          educationalStatus: 'College / University',
+          occupation: isSuperAdmin ? 'President & Executive Administrator' : 'Active Youth Member',
+          profilePicture: authUser.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(fetchedName)}`,
+          membershipStatus: 'Active',
+          membershipDate: '2026-01-01',
+          organizationPosition: isSuperAdmin ? 'President' : 'Youth Member',
+          committee: isSuperAdmin ? 'Executive Board' : 'General Youth Volunteer',
+          emergencyContact: {
+            name: 'Emergency Contact',
+            relationship: 'Parent / Guardian',
+            contactNumber: '+63 917 554 8920'
+          },
+          registeredEventIds: [],
+          stats: {
+            eventsJoined: 0,
+            totalAttendance: 0,
+            attendanceRate: 100,
+            volunteerHours: 0,
+            projectsParticipated: 0,
+            certificatesEarned: 0
+          }
+        };
+        setMembers(prev => [newMember, ...prev.filter(m => m.email.toLowerCase().trim() !== trimmedEmail)]);
+      }
 
       const userObj: User = {
         id: authUser.id,
-        name: authUser.name || email.split('@')[0] || 'User',
+        name: fetchedName,
         email: email,
-        role: isSuperAdminEmail ? 'SUPER_ADMIN' : matchedMember ? 'MEMBER' : 'MEMBER',
-        avatar: authUser.avatar,
-        memberId: matchedMember?.memberId || `PAGASA-2026-${Math.floor(1000 + Math.random() * 9000)}`
+        role: isSuperAdmin ? 'SUPER_ADMIN' : 'MEMBER',
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(fetchedName)}`,
+        memberId: memberId
       };
 
       switchRole(userObj.role, userObj);
-      logAuditEvent('Google Sign-In', 'Settings', `User signed in with Google: ${email}`);
-      showToast('success', 'Google Sign-In Successful', `Welcome, ${userObj.name}!`);
+      logAuditEvent('Google Sign-In', 'Settings', `User signed in with Google: ${email} (${fetchedName})`);
+      showToast('success', `Welcome, ${fetchedName}!`, `Successfully logged in via Google account.`);
       return true;
     } catch (err: any) {
       console.error('Google Sign-In error:', err);
@@ -576,15 +758,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const loginUser = (email: string, targetRole?: UserRole): boolean => {
+  const loginUser = (email: string, targetRole?: UserRole, providedName?: string): boolean => {
     const trimmedEmail = email.trim().toLowerCase();
-    const matchedUser = INITIAL_USERS.find(u => u.email.toLowerCase() === trimmedEmail);
-    const matchedMember = members.find(m => m.email.toLowerCase() === trimmedEmail);
+    const matchedMember = members.find(m => m.email.toLowerCase().trim() === trimmedEmail);
+    const matchedOfficial = officials.find(o => o.contactEmail?.toLowerCase().trim() === trimmedEmail);
+    const matchedUser = INITIAL_USERS.find(u => u.email.toLowerCase().trim() === trimmedEmail);
 
-    if (matchedUser) {
-      switchRole(targetRole || matchedUser.role, matchedUser);
-      return true;
-    } else if (matchedMember) {
+    let resolvedName = providedName?.trim() || '';
+    if (!resolvedName) {
+      if (matchedMember) {
+        resolvedName = matchedMember.fullName;
+      } else if (matchedOfficial) {
+        resolvedName = matchedOfficial.fullName;
+      } else if (matchedUser) {
+        resolvedName = matchedUser.name;
+      } else {
+        resolvedName = formatNameFromEmail(trimmedEmail);
+      }
+    }
+
+    const isSuperAdmin = targetRole === 'SUPER_ADMIN' || 
+                         targetRole === 'ADMIN' || 
+                         trimmedEmail.includes('admin') || 
+                         trimmedEmail === 'giancarlomagat19@gmail.com' || 
+                         trimmedEmail === 'giancarlomagat2104@gmail.com';
+    const effectiveRole: UserRole = isSuperAdmin ? (targetRole || 'SUPER_ADMIN') : 'MEMBER';
+
+    if (matchedMember) {
       if (matchedMember.membershipStatus === 'Pending') {
         showToast('warning', 'Application Pending', 'Your membership registration is still pending approval by an administrator.');
         return false;
@@ -593,39 +793,79 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showToast('error', 'Account Inactive', 'This account is currently inactive or suspended. Please contact organization officers.');
         return false;
       }
+      
       const userObj: User = {
         id: matchedMember.id,
-        name: matchedMember.fullName,
+        name: resolvedName || matchedMember.fullName,
         email: matchedMember.email,
-        role: 'MEMBER',
+        role: effectiveRole,
         avatar: matchedMember.profilePicture,
         memberId: matchedMember.memberId
       };
-      switchRole('MEMBER', userObj);
-      return true;
-    } else {
-      if (targetRole === 'SUPER_ADMIN' || targetRole === 'ADMIN' || trimmedEmail.includes('admin')) {
-        switchRole('SUPER_ADMIN', { ...INITIAL_USERS[0], email: trimmedEmail });
-        return true;
-      }
-      switchRole('MEMBER', {
-        id: 'mem-' + Date.now(),
-        name: email.split('@')[0] || 'Youth Member',
-        email: trimmedEmail,
-        role: 'MEMBER',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-        memberId: `PAGASA-2026-${Math.floor(1000 + Math.random() * 9000)}`
-      });
+      switchRole(effectiveRole, userObj);
+      showToast('success', `Welcome back, ${userObj.name}!`, `Logged in to PAGASA Portal.`);
       return true;
     }
+
+    // New member registration/login automatically with exact name
+    const newMemberId = `PAGASA-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newMember: Member = {
+      id: 'mem-' + Date.now(),
+      memberId: newMemberId,
+      fullName: resolvedName,
+      email: trimmedEmail,
+      contactNumber: '+63 917 554 8920',
+      birthdate: '2004-01-01',
+      age: 22,
+      gender: 'Male',
+      address: 'Brgy. Saint John District (Poblacion), Guimba',
+      barangay: 'Saint John District (Poblacion)',
+      educationalStatus: 'College / University',
+      occupation: isSuperAdmin ? 'President & Executive Administrator' : 'Active Youth Member',
+      profilePicture: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(resolvedName)}`,
+      membershipStatus: 'Active',
+      membershipDate: '2026-01-01',
+      organizationPosition: isSuperAdmin ? 'President' : 'Youth Member',
+      committee: isSuperAdmin ? 'Executive Board' : 'General Youth Volunteer',
+      emergencyContact: {
+        name: 'Emergency Contact',
+        relationship: 'Parent / Guardian',
+        contactNumber: '+63 917 554 8920'
+      },
+      registeredEventIds: [],
+      stats: {
+        eventsJoined: 0,
+        totalAttendance: 0,
+        attendanceRate: 100,
+        volunteerHours: 0,
+        projectsParticipated: 0,
+        certificatesEarned: 0
+      }
+    };
+
+    setMembers(prev => [newMember, ...prev.filter(m => m.email.toLowerCase().trim() !== trimmedEmail)]);
+
+    const userObj: User = {
+      id: newMember.id,
+      name: resolvedName,
+      email: trimmedEmail,
+      role: effectiveRole,
+      avatar: newMember.profilePicture,
+      memberId: newMember.memberId
+    };
+
+    switchRole(effectiveRole, userObj);
+    showToast('success', `Welcome, ${resolvedName}!`, `Signed in to PAGASA Portal.`);
+    return true;
   };
 
   const loginWithSupabase = async (
     email: string,
     _password: string,
-    targetRole?: UserRole
+    targetRole?: UserRole,
+    providedName?: string
   ): Promise<{ success: boolean; message?: string }> => {
-    const ok = loginUser(email, targetRole);
+    const ok = loginUser(email, targetRole, providedName);
     if (ok) {
       return { success: true };
     }
@@ -1215,6 +1455,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         currentUser,
+        currentMember,
         currentRole,
         currentPage,
         selectedEventId,

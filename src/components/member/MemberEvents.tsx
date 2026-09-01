@@ -20,7 +20,7 @@ import { EventItem } from '../../types';
 export const MemberEvents: React.FC = () => {
   const { 
     currentUser, 
-    members, 
+    currentMember, 
     events, 
     registrations, 
     registerForEvent, 
@@ -30,7 +30,6 @@ export const MemberEvents: React.FC = () => {
     addToast
   } = useApp();
 
-  const currentMember = members.find(m => m.id === currentUser?.id || m.email === currentUser?.email) || members[0];
   const [activeTab, setActiveTab] = useState<'registered' | 'all'>('registered');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');

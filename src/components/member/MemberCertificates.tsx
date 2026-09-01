@@ -17,9 +17,8 @@ import {
 } from 'lucide-react';
 
 export const MemberCertificates: React.FC = () => {
-  const { currentUser, members, certificates, addToast } = useApp();
+  const { currentUser, currentMember, certificates, addToast } = useApp();
 
-  const currentMember = members.find(m => m.id === currentUser?.id || m.email === currentUser?.email) || members[0];
   const [selectedCert, setSelectedCert] = useState<CertificateItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');

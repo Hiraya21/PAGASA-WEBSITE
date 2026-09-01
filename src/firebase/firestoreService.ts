@@ -46,12 +46,20 @@ export async function signInWithGoogle(): Promise<User | null> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     const fbUser = result.user;
+    const email = fbUser.email || '';
+    const trimmedEmail = email.toLowerCase().trim();
+    const isSuperAdmin = trimmedEmail === 'giancarlomagat19@gmail.com' || 
+                         trimmedEmail === 'giancarlomagat2104@gmail.com' || 
+                         trimmedEmail.includes('admin');
+
+    const displayName = fbUser.displayName || email.split('@')[0] || 'Youth Member';
+
     return {
       id: fbUser.uid,
-      name: fbUser.displayName || 'Youth Member',
-      email: fbUser.email || '',
-      avatar: fbUser.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${fbUser.uid}`,
-      role: fbUser.email === 'giancarlomagat19@gmail.com' ? 'SUPER_ADMIN' : 'MEMBER'
+      name: displayName,
+      email: email,
+      avatar: fbUser.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(displayName)}`,
+      role: isSuperAdmin ? 'SUPER_ADMIN' : 'MEMBER'
     };
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'auth/google-signin');

@@ -5,9 +5,7 @@ import { PagasaLogo } from '../common/PagasaLogo';
 import { Shield, Printer, Download, ArrowLeft, CheckCircle2, QrCode, Sparkles, MapPin } from 'lucide-react';
 
 export const MemberQRPass: React.FC = () => {
-  const { currentUser, members, setCurrentPage, settings, addToast } = useApp();
-
-  const currentMember = members.find(m => m.id === currentUser?.id || m.email === currentUser?.email) || members[0];
+  const { currentUser, currentMember, setCurrentPage, settings, addToast } = useApp();
 
   const handlePrint = () => {
     window.print();

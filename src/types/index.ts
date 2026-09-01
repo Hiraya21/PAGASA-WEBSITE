@@ -52,6 +52,7 @@ export interface Member {
     relationship: string;
     contactNumber: string;
   };
+  registeredEventIds?: string[];
   stats: {
     eventsJoined: number;
     totalAttendance: number;

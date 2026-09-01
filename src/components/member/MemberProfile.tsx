@@ -27,6 +27,7 @@ import {
 export const MemberProfile: React.FC = () => {
   const { 
     currentUser, 
+    currentMember, 
     members, 
     updateMember, 
     certificates, 
@@ -40,7 +41,6 @@ export const MemberProfile: React.FC = () => {
     setColorPalette
   } = useApp();
 
-  const currentMember = members.find(m => m.id === currentUser?.id || m.email === currentUser?.email) || members[0];
   const memberCerts = certificates.filter(c => c.memberId === currentMember.memberId);
   const memberRecords = attendanceRecords.filter(r => r.memberId === currentMember.memberId);
 

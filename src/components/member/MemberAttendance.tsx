@@ -19,14 +19,13 @@ import {
 export const MemberAttendance: React.FC = () => {
   const { 
     currentUser, 
-    members, 
+    currentMember, 
     attendanceRecords, 
     events, 
     setCurrentPage, 
     addToast 
   } = useApp();
 
-  const currentMember = members.find(m => m.id === currentUser?.id || m.email === currentUser?.email) || members[0];
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 

@@ -19,6 +19,7 @@ import {
 
 export const AdminDashboard: React.FC = () => {
   const { 
+    currentUser,
     members, 
     events, 
     attendanceRecords, 
@@ -52,6 +53,11 @@ export const AdminDashboard: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+              Mabuhay, {currentUser?.name || 'Administrator'} ({currentUser?.role || 'SUPER_ADMIN'})
+            </span>
+          </div>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
             PAGASA Guimba MIS Control Center
           </h1>

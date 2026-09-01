@@ -40,6 +40,7 @@ export const AuthModal: React.FC = () => {
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
+  const [loginFullName, setLoginFullName] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -68,7 +69,7 @@ export const AuthModal: React.FC = () => {
     setIsSubmitting(true);
     try {
       const targetRole = authModalMode === 'admin-login' ? 'SUPER_ADMIN' : 'MEMBER';
-      const res = await loginWithSupabase(loginEmail, loginPassword, targetRole);
+      const res = await loginWithSupabase(loginEmail, loginPassword, targetRole, loginFullName);
       if (res.success) {
         setIsAuthModalOpen(false);
       }
@@ -341,7 +342,26 @@ export const AuthModal: React.FC = () => {
                       required
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
-                      placeholder={authModalMode === 'admin-login' ? 'admin@pagasaguimba.org' : 'juan.delacruz@gmail.com'}
+                      placeholder={authModalMode === 'admin-login' ? 'giancarlomagat2104@gmail.com' : 'giancarlomagat2104@gmail.com'}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Your Full Name
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium">Optional (Auto-detected if blank)</span>
+                  </div>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={loginFullName}
+                      onChange={(e) => setLoginFullName(e.target.value)}
+                      placeholder="e.g. Gian Carlo Magat"
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all"
                     />
                   </div>
@@ -395,7 +415,7 @@ export const AuthModal: React.FC = () => {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      <span>Sign In with Supabase Auth</span>
+                      <span>Sign In to Portal</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

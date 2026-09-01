@@ -19,7 +19,7 @@ import { QRCodeSVG } from 'qrcode.react';
 export const MemberDashboard: React.FC = () => {
   const { 
     currentUser, 
-    members, 
+    currentMember, 
     events, 
     attendanceRecords, 
     certificates, 
@@ -27,7 +27,6 @@ export const MemberDashboard: React.FC = () => {
     setSelectedEventId 
   } = useApp();
 
-  const currentMember = members.find(m => m.id === currentUser?.id || m.email === currentUser?.email) || members[0];
   const memberRecords = attendanceRecords.filter(r => r.memberId === currentMember.memberId);
   const memberCerts = certificates.filter(c => c.memberId === currentMember.memberId);
   const myRegisteredEvents = events.filter(e => currentMember.registeredEventIds?.includes(e.id));

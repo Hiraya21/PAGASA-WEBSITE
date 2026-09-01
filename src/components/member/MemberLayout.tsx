@@ -35,8 +35,8 @@ export const MemberLayout: React.FC<MemberLayoutProps> = ({ children }) => {
     currentPage, 
     setCurrentPage, 
     currentUser, 
+    currentMember, 
     currentRole, 
-    members, 
     logoutUser, 
     switchRole,
     settings, 
@@ -52,7 +52,6 @@ export const MemberLayout: React.FC<MemberLayoutProps> = ({ children }) => {
   const [copiedId, setCopiedId] = useState(false);
   const [isProfilePicModalOpen, setIsProfilePicModalOpen] = useState(false);
 
-  const currentMember = members.find(m => m.id === currentUser?.id || m.email === currentUser?.email) || members[0];
   const unreadNotifs = notifications.filter(n => !n.isRead).length;
 
   const handleCopyMemberId = () => {
