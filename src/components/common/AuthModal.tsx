@@ -445,37 +445,6 @@ export const AuthModal: React.FC = () => {
                   </svg>
                   <span>{isGoogleLoading ? 'Connecting OAuth...' : 'Sign In with Google (OAuth)'}</span>
                 </button>
-
-                {/* 1-Click Fast Demo Logins */}
-                <div className="pt-4 border-t border-slate-100">
-                  <p className="text-xs text-slate-400 text-center mb-2.5 font-medium flex items-center justify-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Quick Sandbox Role Access:</span>
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => quickDemoLogin('SUPER_ADMIN')}
-                      className="p-2 text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 rounded-xl font-semibold transition-colors text-left cursor-pointer"
-                    >
-                      👑 Super Admin
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickDemoLogin('ADMIN')}
-                      className="p-2 text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 rounded-xl font-semibold transition-colors text-left cursor-pointer"
-                    >
-                      🛠️ Officer Admin
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickDemoLogin('MEMBER')}
-                      className="p-2 text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 rounded-xl font-semibold transition-colors text-left cursor-pointer"
-                    >
-                      👤 Member Portal
-                    </button>
-                  </div>
-                </div>
               </form>
             )}
 

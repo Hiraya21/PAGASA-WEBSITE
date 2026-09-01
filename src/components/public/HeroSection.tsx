@@ -249,10 +249,10 @@ export const HeroSection: React.FC = () => {
                 </p>
 
                 {/* Action Buttons */}
-                <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3">
                   <button
                     onClick={() => handleAction(currentSlide.primaryBtnAction)}
-                    className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs sm:text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                    className="w-full xs:w-auto px-4 sm:px-5 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs sm:text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>{currentSlide.primaryBtnText}</span>
                     <ArrowRight className="w-4 h-4" />
@@ -260,14 +260,14 @@ export const HeroSection: React.FC = () => {
 
                   <button
                     onClick={() => handleAction(currentSlide.secondaryBtnAction)}
-                    className="px-5 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                    className="w-full xs:w-auto px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>{currentSlide.secondaryBtnText}</span>
                   </button>
 
                   <button
                     onClick={() => setCurrentPage('projects')}
-                    className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-bold text-xs sm:text-sm border border-white/15 backdrop-blur-md hover:-translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                    className="w-full xs:w-auto px-4 py-2.5 sm:py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-bold text-xs sm:text-sm border border-white/15 backdrop-blur-md hover:-translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Layers className="w-4 h-4 text-sky-400" />
                     <span>Projects</span>

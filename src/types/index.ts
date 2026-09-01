@@ -47,6 +47,7 @@ export interface Member {
   membershipStatus: MembershipStatus;
   organizationPosition?: string;
   committee?: string;
+  portalPassword?: string;
   emergencyContact: {
     name: string;
     relationship: string;

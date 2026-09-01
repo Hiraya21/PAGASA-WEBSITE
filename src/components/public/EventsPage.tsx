@@ -244,8 +244,8 @@ export const EventsPage: React.FC = () => {
                 }}
                 className="p-4 sm:p-5 rounded-2xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
               >
-                <div className="flex items-start sm:items-center gap-4">
-                  <div className="p-3 bg-blue-100 text-blue-800 rounded-2xl text-center min-w-[70px]">
+                <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1">
+                  <div className="p-3 bg-blue-100 text-blue-800 rounded-2xl text-center min-w-[64px] sm:min-w-[70px] flex-shrink-0">
                     <span className="text-[10px] uppercase font-bold block">
                       {new Date(evt.date).toLocaleDateString('en-US', { month: 'short' })}
                     </span>
@@ -253,17 +253,17 @@ export const EventsPage: React.FC = () => {
                       {new Date(evt.date).getDate()}
                     </span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 uppercase">
                         {evt.category}
                       </span>
                       <span className="text-xs text-slate-500">{evt.time}</span>
                     </div>
-                    <h3 className="text-base font-bold text-slate-900 mt-1">{evt.title}</h3>
-                    <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span>{evt.location}</span>
+                    <h3 className="text-base font-bold text-slate-900 mt-1 break-words">{evt.title}</h3>
+                    <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 truncate">
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{evt.location}</span>
                     </p>
                   </div>
                 </div>

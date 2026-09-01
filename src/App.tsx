@@ -310,15 +310,16 @@ const PageRenderer: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-600 selection:text-white w-full overflow-x-hidden">
       <Navbar />
 
-      <main className="flex-1 pb-16 sm:pb-0">
+      <main className="flex-1 pb-20 md:pb-0 w-full min-w-0">
         <motion.div
           key={currentPage}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
+          className="w-full min-w-0"
         >
           {publicContent}
         </motion.div>

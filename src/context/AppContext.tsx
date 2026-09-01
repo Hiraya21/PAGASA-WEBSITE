@@ -758,11 +758,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const loginUser = (email: string, targetRole?: UserRole, providedName?: string): boolean => {
-    const trimmedEmail = email.trim().toLowerCase();
-    const matchedMember = members.find(m => m.email.toLowerCase().trim() === trimmedEmail);
-    const matchedOfficial = officials.find(o => o.contactEmail?.toLowerCase().trim() === trimmedEmail);
-    const matchedUser = INITIAL_USERS.find(u => u.email.toLowerCase().trim() === trimmedEmail);
+  const loginUser = (emailOrIdentifier: string, targetRole?: UserRole, providedName?: string): boolean => {
+    const input = emailOrIdentifier.trim().toLowerCase();
+    const matchedMember = members.find(m => 
+      m.email.toLowerCase().trim() === input || 
+      m.memberId.toLowerCase().trim() === input
+    );
+    const matchedOfficial = officials.find(o => 
+      o.contactEmail?.toLowerCase().trim() === input ||
+      o.fullName.toLowerCase().trim() === input
+    );
+    const matchedUser = INITIAL_USERS.find(u => 
+      u.email.toLowerCase().trim() === input ||
+      u.memberId?.toLowerCase().trim() === input
+    );
 
     let resolvedName = providedName?.trim() || '';
     if (!resolvedName) {
@@ -773,24 +782,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else if (matchedUser) {
         resolvedName = matchedUser.name;
       } else {
-        resolvedName = formatNameFromEmail(trimmedEmail);
+        resolvedName = formatNameFromEmail(input);
       }
     }
 
     const isSuperAdmin = targetRole === 'SUPER_ADMIN' || 
                          targetRole === 'ADMIN' || 
-                         trimmedEmail.includes('admin') || 
-                         trimmedEmail === 'giancarlomagat19@gmail.com' || 
-                         trimmedEmail === 'giancarlomagat2104@gmail.com';
+                         input.includes('admin') || 
+                         input === 'giancarlomagat19@gmail.com' || 
+                         input === 'giancarlomagat2104@gmail.com';
     const effectiveRole: UserRole = isSuperAdmin ? (targetRole || 'SUPER_ADMIN') : 'MEMBER';
 
     if (matchedMember) {
       if (matchedMember.membershipStatus === 'Pending') {
-        showToast('warning', 'Application Pending', 'Your membership registration is still pending approval by an administrator.');
+        showToast('warning', 'Application Pending Approval', 'Your membership registration is currently pending review by an administrator.');
         return false;
       }
       if (matchedMember.membershipStatus === 'Suspended' || matchedMember.membershipStatus === 'Inactive') {
-        showToast('error', 'Account Inactive', 'This account is currently inactive or suspended. Please contact organization officers.');
+        showToast('error', 'Member Portal Access Disabled', 'This member account is currently inactive or suspended. Please contact an organization administrator.');
         return false;
       }
       
@@ -803,7 +812,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         memberId: matchedMember.memberId
       };
       switchRole(effectiveRole, userObj);
-      showToast('success', `Welcome back, ${userObj.name}!`, `Logged in to PAGASA Portal.`);
+      showToast('success', `Welcome back, ${userObj.name}!`, `Logged in to PAGASA Member Portal.`);
       return true;
     }
 
@@ -813,7 +822,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'mem-' + Date.now(),
       memberId: newMemberId,
       fullName: resolvedName,
-      email: trimmedEmail,
+      email: input.includes('@') ? input : `${input.toLowerCase()}@pagasaguimba.org`,
       contactNumber: '+63 917 554 8920',
       birthdate: '2004-01-01',
       age: 22,
@@ -843,12 +852,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
 
-    setMembers(prev => [newMember, ...prev.filter(m => m.email.toLowerCase().trim() !== trimmedEmail)]);
+    setMembers(prev => [newMember, ...prev.filter(m => m.email.toLowerCase().trim() !== newMember.email.toLowerCase().trim())]);
 
     const userObj: User = {
       id: newMember.id,
       name: resolvedName,
-      email: trimmedEmail,
+      email: newMember.email,
       role: effectiveRole,
       avatar: newMember.profilePicture,
       memberId: newMember.memberId
@@ -995,7 +1004,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'mem-' + Date.now(),
       memberId,
       membershipDate: new Date().toISOString().split('T')[0],
-      membershipStatus: settings.registrationAutoApproval ? 'Active' : 'Pending',
+      membershipStatus: data.membershipStatus || (settings.registrationAutoApproval ? 'Active' : 'Pending'),
       stats: {
         eventsJoined: 0,
         totalAttendance: 0,
@@ -1008,7 +1017,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMembers(prev => [newMember, ...prev]);
     logAuditEvent('Registered New Member', 'Members', `Added member: ${newMember.fullName} (${memberId}).`);
     addNotification('New Member Application', `${newMember.fullName} from Brgy. ${newMember.barangay} registered.`, 'system');
-    showToast('success', 'Registration Submitted', `Member profile created with ID ${memberId}.`);
+    showToast('success', 'Registration Completed', `Member ${newMember.fullName} profile created with ID ${memberId}.`);
     return newMember;
   };
 
